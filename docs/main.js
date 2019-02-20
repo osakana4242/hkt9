@@ -180,8 +180,8 @@ class App {
 			clickableIcons: false,
 			disableDefaultUI: true,
 			navigationControll: false,
-			draggable: false,
-			disableDoubleClickZoom: false,
+			draggable: true,
+			disableDoubleClickZoom: true,
 		};
 		this.info = document.getElementById('info');
 		this.map = new google.maps.Map(document.getElementById('map'), options);
@@ -196,7 +196,7 @@ class App {
 
 		const app = this;
 		// https://developers.google.com/maps/documentation/javascript/events
-		google.maps.event.addListener(this.map, 'mousedown', _evt => {
+		google.maps.event.addListener(this.map, 'mouseup', _evt => {
 			app.nextClickArr.push(_evt);
 			// console.log(`unko ${_evt.latLng.lat()} ${_evt.latLng.lng()}`);
 		});
@@ -297,7 +297,7 @@ class App {
 				2,
 				new google.maps.LatLng(startBasePosition.lat() + latOffset, startBasePosition.lng() + lngOffset),
 				new google.maps.LatLng(endBasePosition.lat() + latOffset2, endBasePosition.lng() + lngOffset2),
-				10
+				5
 			);
 			app.bulletArr.push(bullet);
 		}
@@ -309,7 +309,7 @@ class App {
 		for (let i = bulletArr.length - 1; 0 <= i; i--) {
 			const bullet = bulletArr[i];
 			if (bullet.time < bullet.duration) continue;
-			const explosion = new Explosion(bullet.ownerId, bullet.position, 2, Time.secToTime(1));
+			const explosion = new Explosion(bullet.ownerId, bullet.position, 1, Time.secToTime(1));
 			app.explosionArr.push(explosion);
 			bulletArr.splice(i, 1);
 		}

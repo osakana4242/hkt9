@@ -388,7 +388,7 @@ class App {
 					paths: triangleCoords,
 					strokeColor: "#000000",
 					strokeOpacity: 1,
-					strokeWeight: 2,
+					strokeWeight: 0,
 					fillColor: explosion.ownerId === 1 ? '#ffff00' : '#ff0000',
 					fillOpacity: 1,
 				});

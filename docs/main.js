@@ -308,7 +308,7 @@ class App {
 		const bulletArr = app.bulletArr;
 		for (let i = bulletArr.length - 1; 0 <= i; i--) {
 			const bullet = bulletArr[i];
-			if (bullet.time < bullet.duration) continue;
+			if (bullet.time < bullet.duration && bullet.state !== 'explosion') continue;
 			const explosion = new Explosion(bullet.ownerId, bullet.position, 1, Time.secToTime(1));
 			app.explosionArr.push(explosion);
 			bulletArr.splice(i, 1);
@@ -327,6 +327,7 @@ class App {
 	static updateBullet(app) {
 		{
 			app.bulletArr.forEach(bullet => {
+				if (bullet.state === 'explosion') return;
 				const progress = MathUtil.progress01(bullet.time, bullet.duration);
 				bullet.time += app.ticker.deltaTime;
 				const nextPos = LatLngUtil.lerp(bullet.startPosition, bullet.targetPosition, progress);
@@ -347,7 +348,7 @@ class App {
 					path: flightPlanCoordinates,
 					strokeColor: bullet.ownerId === 1 ? '#ffffff' : '#ff00ff',
 					strokeOpacity: 1.0,
-					strokeWeight: 2
+					strokeWeight: 3
 				});
 				polyline.setMap(app.map);
 				app.polylineArr.push(polyline);
@@ -356,7 +357,8 @@ class App {
 	}
 
 	static updateExplosion(app) {
-		app.explosionArr.forEach(explosion => {
+		const explosionArr = app.explosionArr;
+		explosionArr.forEach(explosion => {
 			const progress = MathUtil.progress01(explosion.time, explosion.duration);
 			explosion.time += app.ticker.deltaTime;
 			const radius = LerpUtil.easeIn(explosion.radius, 0, progress);
@@ -395,7 +397,25 @@ class App {
 				app.polylineArr.push(polygon);
 			}
 		});
+
+		const bulletArr = app.bulletArr;
+		for (let i1 = 0; i1 < explosionArr.length; i1++) {
+			var explosion = explosionArr[i1];
+			if (explosion.ownerId !== 1) continue;
+
+			const progress = MathUtil.progress01(explosion.time, explosion.duration);
+			const radius = LerpUtil.easeIn(explosion.radius, 0, progress);
+
+			for (let i2 = 0; i2 < bulletArr.length; i2++) {
+				var bullet = bulletArr[i2];
+				if (bullet.ownerId === 1) continue;
+				const dist = LatLngUtil.distance(bullet.position, explosion.position);
+				if (radius < dist) continue;
+				bullet.state = "explosion";
+			}
+		}
 	}
+
 
 	static loop(app) {
 		try {

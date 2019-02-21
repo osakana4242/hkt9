@@ -193,6 +193,8 @@ class App {
 
 		this.nextClickArr = [];
 		this.clickArr = [];
+		this.score = 0;
+		this.damage = 0;
 
 		const app = this;
 		// https://developers.google.com/maps/documentation/javascript/events
@@ -218,7 +220,7 @@ class App {
 		App.updateExplosion(app);
 		App.removeBullet(app);
 		App.removeExplosion(app);
-		app.info.innerHTML = `bullet: ${app.bulletArr.length}`;
+		app.info.innerHTML = `スコア ${app.score} 被害 ${app.damage}`;
 	}
 
 	static clearPolyline(app) {
@@ -297,7 +299,7 @@ class App {
 				2,
 				new google.maps.LatLng(startBasePosition.lat() + latOffset, startBasePosition.lng() + lngOffset),
 				new google.maps.LatLng(endBasePosition.lat() + latOffset2, endBasePosition.lng() + lngOffset2),
-				5
+				3
 			);
 			app.bulletArr.push(bullet);
 		}
@@ -309,7 +311,15 @@ class App {
 		for (let i = bulletArr.length - 1; 0 <= i; i--) {
 			const bullet = bulletArr[i];
 			if (bullet.time < bullet.duration && bullet.state !== 'explosion') continue;
-			const explosion = new Explosion(bullet.ownerId, bullet.position, 1, Time.secToTime(1));
+			const ownerId = (bullet.ownerId === 1) ? 
+				1 :
+				(bullet.state === 'explosion') ?
+					1 :
+					2;
+			if (ownerId === 2) {
+				app.damage += 100;
+			}
+			const explosion = new Explosion(ownerId, bullet.position, 1, Time.secToTime(1));
 			app.explosionArr.push(explosion);
 			bulletArr.splice(i, 1);
 		}
@@ -334,10 +344,10 @@ class App {
 				bullet.position = nextPos;
 				bullet.positionArr.push(nextPos);
 
-				const flightPlanCoordinates = [];
+				const linePositions = [];
 				{
 					const arr = bullet.positionArr;
-					arr.forEach(_item => flightPlanCoordinates.push(_item));
+					arr.forEach(_item => linePositions.push(_item));
 					const limit = 4;
 					if (limit < arr.length) {
 						arr.splice(0, arr.length - limit);
@@ -345,7 +355,7 @@ class App {
 				}
 
 				const polyline = new google.maps.Polyline({
-					path: flightPlanCoordinates,
+					path: linePositions,
 					strokeColor: bullet.ownerId === 1 ? '#ffffff' : '#ff00ff',
 					strokeOpacity: 1.0,
 					strokeWeight: 3
@@ -364,17 +374,28 @@ class App {
 			const radius = LerpUtil.easeIn(explosion.radius, 0, progress);
 
 			{
-				const baseTriangleCoords = [
-					new google.maps.LatLng(1, 0),
-					new google.maps.LatLng(0.7, 0.7),
-					new google.maps.LatLng(0, 1),
-					new google.maps.LatLng(-0.7, 0.7),
-					new google.maps.LatLng(-1, 0),
-					new google.maps.LatLng(-0.7, -0.7),
-					new google.maps.LatLng(0, -1),
-					new google.maps.LatLng(0.7, -0.7),
-					new google.maps.LatLng(1, 0),
-				];
+				// const baseTriangleCoords = [
+				// 	new google.maps.LatLng(1, 0),
+				// 	new google.maps.LatLng(0.7, 0.7),
+				// 	new google.maps.LatLng(0, 1),
+				// 	new google.maps.LatLng(-0.7, 0.7),
+				// 	new google.maps.LatLng(-1, 0),
+				// 	new google.maps.LatLng(-0.7, -0.7),
+				// 	new google.maps.LatLng(0, -1),
+				// 	new google.maps.LatLng(0.7, -0.7),
+				// 	new google.maps.LatLng(1, 0),
+				// ];
+				const baseTriangleCoords = [];
+
+				for (let i = 0, iMax = 16; i < iMax; i++) {
+					const rad = Math.PI * 2 * i / iMax;
+					baseTriangleCoords.push(
+						new google.maps.LatLng(
+							Math.sin(rad),
+							Math.cos(rad)
+						)
+					);
+				}
 
 				const triangleCoords = [];
 				baseTriangleCoords.forEach(_item => {
@@ -414,6 +435,7 @@ class App {
 				if (bullet.ownerId === 1) continue;
 				const dist = LatLngUtil.distance(bullet.position, explosion.position);
 				if (radius < dist) continue;
+				app.score += 100;
 				bullet.state = "explosion";
 			}
 		}

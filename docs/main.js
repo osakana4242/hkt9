@@ -391,6 +391,9 @@ class App {
 					strokeWeight: 0,
 					fillColor: explosion.ownerId === 1 ? '#ffff00' : '#ff0000',
 					fillOpacity: 1,
+					clickable: false,
+					draggable: false,
+					editable: false,
 				});
 
 				polygon.setMap(app.map);
